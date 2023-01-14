@@ -392,17 +392,17 @@
     <table border="1" align="center">
         <tr>
             <td></td>
-            <td>2 by 3 map</td>
-            <td>3 by 3 map</td>
-            <td>3 by 4 map</td>
+            <td bgcolor="grey">2 by 3 map</td>
+            <td bgcolor="grey">3 by 3 map</td>
+            <td bgcolor="grey">3 by 4 map</td>
         </tr>
         <tr>
-            <td>Method 1:</td>
+            <td bgcolor="grey">Method 1:</td>
             <td>60 ms.</td>
             <td>940 ms.</td>
             <td>60530 ms. (1 minute)</td>
         </tr> <tr>
-            <td>Method 2:</td>
+            <td bgcolor="grey">Method 2:</td>
             <td>0 ms.</td>
             <td>0 ms.</td>
             <td>0 ms</td>
@@ -410,8 +410,405 @@
     </table>
     <p>The zeros in the above table indicate times too short to measure (less than 1 millisecond). Why this huge difference? Either of
         these methods could have exponential growth. Eliminating a node automatically eliminates all of its descendents, and this will 
-        often prevent exponential growth. Conversely, by waiting to check u
-
+        often prevent exponential growth. Conversely, by waiting to check until a leaf node is reached, exponential growth is practically guaranteed. If there is any way to eliminate children (reduce the set of choices), do so!
     </p>
+    <h3>Debugging techniques</h3>
+    <p>
+        Often our first try at a program doesn't work, and we need to debug it. Debuggers are helpful, but sometimes we need to fail
+        back on inserting print statements. These are some simple tricks to making effective use of print statements. These tricks can be 
+        applied to any program, but are esecially useful when you are trying to debug recursiove routines.
+    </p>
+    <p><b>Trick #1: Indent when you print method entries and exist.</b></p>
+    <p>
+        Often, the best debugging technique is not to print every method call and return the most important ones.) You porbably
+        want to print, for each method, what parameters it came in with, and what value it leaves with. However, if you just print a long
+        list of these, it's hard to match up method exits with their corresponding entries. Indenting to show the level of nesting can help.
+    </p>
+    <P><b>Trick #2: Use specialized print methods for debugging.</b></P>
+    <p>
+        Don't clutter up your actual code more than you must. Also, remember that code inserted for debugging purposes can itself
+        contain bugs, or (in the worst case) can affect the results, so be very careful with it.
+    </p>
+    <p>
+        Here's our debugging code. For this trivial program, there's almost more debugging code than actual code, but in larger programs the proportions will be better.
+    </p>
+    <font color="blue">
+        <pre>
+            static String indent = "";
+
+            static String name(BinaryTree node) {
+                if (node == null) return null;
+                else return node.name;
+            }
+
+            static void enter(BinaryTree node) {
+                if (node == null) return null;
+                else return node.name;
+            }
+
+            static void enter(BinaryTree node) {
+                System.out.println(indent + "Entering solvable(" + name(node) + ")");
+                indent = indent + "| ";
+            }
+
+            static boolean yes(BinaryTree node) {
+                indent = indent.substring(3);
+                System.out.println(indent + "solvable(" +name(node) + ")return true");
+                return true;
+            }
+
+            static boolean no(BinaryTree node) {
+                indent = indent.substring(3);
+                System.out.println(indent + "solvable(" + name(node) + "") returns false");
+                return false;
+            }
+        </pre>
+    </font>
+    <p>To use this code, we modify solvable as follows:</p>
+    <font color="blue">
+        <pre>
+            static boolean solvable(BinaryTree node) {
+             enter(node);
+             if (node == null) return no(node);
+             if (node.isGoalNode) return yes(node);
+             if (solvable(node.leftChild)) return yes(node);
+             if (solvable(node.rightChild)) return yes(node);
+             return no(node);
+            }
+        </pre>
+    </font>
+    <p>
+        And we get these results:<br>
+    </p>
+    <pre>
+        Entering solvable(Root)
+        | Entering solvable(A)
+        | | Entering solvable(C)
+        | | | Entering solvable(null)
+        | | | solvable(null) returns false
+        | | | Entering solvable(null)
+        | | | solvable(null) returns false
+        | | solvable(C) returns false
+        | | Entering solvable(D)
+        | | | Entering solvable(null)
+        | | | solvable(null) returns false
+        | | | Entering solvable(null)
+        | | | solvable(null) returns false
+        | | solvable(D) returns false
+        | solvable(A) returns false
+        | Entering solvable(B)
+        | | Entering solvable(E)
+        | | solvable(E) returns true
+        | solvable(B) returns true
+        solvable(Root) returns true
+        true
+
+    </pre>
+    <P><b>Trick #3: Never discard your debugging statements.</b></P>
+    <p>
+        Writing debugging statements is programming, too. Often it's much work to debug the debugging statements as it is to debug
+        the actual program. Once your program is working, why throw this away?
+    </p>
+    <p>
+        Obviously, you don't want to print out all this debugging information from a program you are ready to submit (or to turn over to 
+        your manager). You could comment out your debugging call, but that can be a lot of work. What's more, in the above example,
+        you would have to replace every return(yes(node)) with return(true), and every return(no(node)) with return false. With all these
+        changes, you might introduce new bugs into your program.
+    </p>
+    <p>The simple solution to make your debugging statements conditional. For example,</p>
+    <font color="blue">
+    <pre>
+        static final boolean debugging = false;
+
+        static void enter(BinaryTree node) {
+            if (debugging) {
+                System.out.println(indent + "Entering solvable(" + name(node) + ")");
+                indent = indent + "| ";
+            }
+        }
+
+        static boolean yes(BinaryTree node) {
+            if (debugging) {
+                indent = indent.substring(3);
+                System.out.println(indent + "solvable(" + name(node) + ")returns true");
+            }
+            return true;
+        }
+
+        static boolean no(BinaryTree node) {
+            if (debugging) {
+                indent = indent.substring(3);
+                System.out.println(indent + "solvable(" + name(node) + ") returns false");
+            }
+            return false;
+        }
+    </pre>
+    </font>
+    <p><b>Trick #4: Create an Exception.</b></p>
+    <p>If an Exception is thrown, you can get information about just where it happened by sending it the message
+        printStackTrace(PrintStream). Since an Exception is an object like any other, you can create and throw your own Exceptions,
+        However, Java programmers don't always realize that you can create an Exception without throwing it. For example, the following code.
+    </p>
+    <font color="blue">
+        <pre>
+            new Exception("Checkpoint Charlie").printStackTrace(System.out);
+        </pre>
+    </font>
+    <p>
+        will print out a message something like this, and the program will then continue normally. That is, the above code just acts like a
+        print statement.
+    </p>
+    <font>
+        <pre>
+            java.lang.Exception: Checkpoint Charlie
+             at TreeSearch.solvable(TreeSearch.java:53)
+             at TreeSearch.solvable(TreeSearch.java:57)
+             at TreeSearch.main(TreeSearch.java:72)
+             at_SHELL38.run(_SHELL38.java:16)
+             at bluej.runtime.ExecServer.suspendExecution(Unknown Source)
+        </pre>
+    </font>
+    <hr/>
+    <h3>Example: Cindy's Puzzle</h3>
+    <p>
+        I call the following puzzle "Cindy's puzzle" for historical reasons. You have some number n o0f black marbles and the same number 
+        of white marbles and you have a playing board which consists simply of a line of 2n+1 spaces to put the marbles in. Start with 
+        the black marbles all at one end (say, the left), the white marbles all at the other end, and a free space in between.
+    </p>
+    <table border="1" align="center">
+        <tr>
+            <td bgcolor="grey" width="50px"><img src="./black-ball.png"/></td>
+            <td bgcolor="grey" width="50px"><img src="./black-ball.png"/></td>
+            <td bgcolor="grey" width="50px">&nbsp;</td>
+            <td bgcolor="grey" width="50px"><img src="./white-ball.png"/></td>
+            <td bgcolor="grey" width="50px"><img src="./white-ball.png"/></td>
+        </tr>
+    </table>
+    <p>
+        The goal is to reverse the positions of the marbles:
+    </p>
+    <table border="1" align="center">
+        <tr>
+            <td bgcolor="grey" width="50px"><img src="./white-ball.png"/></td>
+            <td bgcolor="grey" width="50px"><img src="./white-ball.png"/></td>
+            <td bgcolor="grey" width="50px">&nbsp;</td>
+            <td bgcolor="grey" width="50px"><img src="./black-ball.png"/></td>
+            <td bgcolor="grey" width="50px"><img src="./black-ball.png"/></td>
+        </tr>
+    </table>
+    <p>
+        The black marbles can only move to the right, and the white marbles can only move to the left (no backing up). At each move, a
+        marble can either:
+    </p>
+    <ul>
+        <li>Move one space ahed, if that space is clear, or</li>
+        <li>Jump ahead over exactly one marble of the opposite color, if the space just beyond that marble is clear.</li>
+    </ul>
+    <p>
+        For example, you could make the following sequence of moves:
+    </p>
+    <table align="center">
+        <tr>
+            <td>
+                <b>Starting Position:</b>
+            </td>
+            <td>
+                <table border="1">
+                    <tr>
+                        <td><img src="black-ball.png"/></td>
+                        <td><img src="black-ball.png"/></td>
+                        <td>&nbsp; </td>
+                        <td><img src="white-ball.png"/></td>
+                        <td><img src="white-ball.png"/></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    
+    
+        <tr>
+            <td>
+                <b>Black moves ahead:</b>
+            </td>
+            <td>
+                <table border="1">
+                    <tr>
+                        <td><img src="black-ball.png"/></td>
+                        <td>&nbsp</td>
+                        <td><img src="black-ball.png"/></td>
+                        <td><img src="white-ball.png"/></td>
+                        <td><img src="white-ball.png"/></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    
+        <tr>
+            <td>
+                <b>White jumps:</b>
+            </td>
+            <td>
+                <table border="1">
+                    <tr>
+                        <td><img src="black-ball.png"/></td>
+                        <td><img src="white-ball.png"/></td>
+                        <td><img src="black-ball.png"/></td>
+                        <td><img src=""/>&nbsp;</td>
+                        <td><img src="white-ball.png"/></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    
+        <tr>
+            <td>
+                <b>Black moves ahead:</b>
+            </td>
+            <td>
+                <table border="1">
+                    <tr>
+                        <td><img src="black-ball.png"/></td>
+                        <td><img src="white-ball.png"/></td>
+                        <td>&nbsp;</td>
+                        <td><img src="black-ball.png"/></td>
+                        <td><img src="white-ball.png"/></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    
+        <tr>
+            <td>
+                <b>Black jumps:</b>
+            </td>
+            <td>
+                <table border="1">
+                    <tr>
+                        <td><img src=""/>&nbsp;</td>
+                        <td><img src="white-ball.png"/></td>
+                        <td><img src="black-ball.png"/></td>
+                        <td><img src="black-ball.png"/></td>
+                        <td><img src="white-ball.png"/></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    
+        <tr>
+            <td>
+                <b>White moves ahead:</b>
+            </td>
+            <td>
+                <table border="1">
+                    <tr>
+                        <td><img src=""/>&nbsp;</td>
+                        <td><img src="white-ball.png"/></td>
+                        <td><img src="black-ball.png"/></td>
+                        <td><img src="black-ball.png"/></td>
+                        <td><img src="white-ball.png"/></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+
+        <tr>
+            <td><b>Stuck!</b></td>
+        </tr>
+    </table>
+    <p>
+        The backtracking method is named solvable and returns a boolean. In solvable we shall need to check whether we are at a leaf,
+        which in this case means a position from which no further moves are possible. This isn't so easy.
+    </p>
+    <p>
+        Now to the program. The main program will initialize the board, and call a recursive backtracking routine to solve the 
+        puzzle. The backtracking routine will either succeed and print out a winning path, or ot will fail, and the main program will have to 
+        print out the ad news.
+    </p>
+    <p>
+        The backtracking method is named solvable and returns a boolean. In solvable we shall need to check whether we are at a leaf,
+        which in this case means a position from which no further moves are possible. This isn't so easy.
+    </p>
+    <p>
+        Each possible move will result in a new board position, and these new board positions are the children of the current board
+        position. Remember that is also highly desirable to find an ordering on these possible moves.
+    </p>
+    <p>
+        Here it is to stop and take thought. If you were to program this puzzle, you might find a diffrent but a equally valid approach.
+    </p>
+    <p>
+        First, notice that if a marble has a move, that move is unique: if it can move ahead one square, then it cannot jump.
+        This suggests that, to find the possible moves, we might assign numbers to the marbles, and
+        check each move in turn. This would require having a table to keep track of where each marble is, or else somehow "making" each
+        marble with ots number and searching the board each time to find the marble we want. Neither alternative is very attractive.
+    </p>
+    <p>
+        Next, notice that for a given board position, each marble occupies a unique space. If a move is possible from a given space, then that
+        must be the only move possible from that space, because if the marble in that space has a move, it is unique. There is a slight
+        complication because not every space contains a marble, but at least the spaces (Unlike the marbles) stay in one place.
+    </p>
+    <p>
+        Now we have a simpler ordering of moves to use in our program. Just check, in order, the 2n+1 spaces of the board. For each
+        space, either zero or one moves is possible. With this understanding, we can write a boolean method canMove(int[] board, int 
+        position) which determines whether a move is possible from the given position:
+    </p>
+    <ul>
+        <li>If the position is empty, no move is possible;</li>
+        <li>If the position contains a black marble, the method checks for a move or jump to the right;</li>
+        <li>If the position contains a white marble, the method checks for a move or jump to the left.</li>
+    </ul>
+    <p>
+        We write another method <b>int[] makeMove(int[] oldBoard, int position)</b> that will takea board and a position, make a move from
+        that position, and return as its value a new board. (We could write this somewhat more efficiently by changing the old board,
+        rather than creating a new one, but here we are more concerned with simplicity.) In technical jargon, makeMove is "applicative"
+        rather than "mutative."
+    </p>
+    <p>
+        Along with <b>canMove and makeMove,</b> we are using methods <b>puzzleSolved and printBoard</b> with meanings that
+        should be obvious.
+    </p>
+    <font color="blue">
+        <pre>
+            boolean solvable(int[] board) {
+                if (puzzleSolvable(board)) {
+                    return true;
+                }
+                for (int position = 0; position < BOARD_SIZE; position++) {
+                    if (canMove(board, position)) {
+                        int[] newBoard = makeMove(board, position);
+                        if (solvable(newBoard)) {
+                            printBoard(newBoard);
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+        </pre>
+    </font>
+    <p>
+        Along with canMove and makeMove, we are using methods puzzleSolved and printBoard with meanings that should be obvious.
+    </p>
+    <p>
+        Here is some output from the program:
+    </p>
+    <pre>
+        <i><font color="blue">16. </font></i><b>WHTE WHITE WHITE _____ BLACK BLACK BLACK</b>
+        <i><font color="blue">15. </font></i><b>WHTE WHITE WHITE BLACK _____ BLACK BLACK</b>
+        <i><font color="blue">14. </font></i><b>WHTE WHITE _____ BLACK WHITE BLACK BLACK</b>
+        <i><font color="blue">13. </font></i><b>WHTE _____ WHITE BLACK WHITE BLACK BLACK</b>
+        <i><font color="blue">12. </font></i><b>WHTE WHITE WHITE _____ BLACK BLACK BLACK</b>
+        <i><font color="blue">11. </font></i><b>WHTE WHITE WHITE _____ BLACK BLACK BLACK</b>
+        <i><font color="blue">10. </font></i><b>WHTE WHITE WHITE _____ BLACK BLACK BLACK</b>
+        <i><font color="blue">9. </font></i><b>WHTE WHITE WHITE _____ BLACK BLACK BLACK</b>
+        <i><font color="blue">8. </font></i><b>WHTE WHITE WHITE _____ BLACK BLACK BLACK</b>
+        <i><font color="blue">7. </font></i><b>_____ WHITE WHITE _____ BLACK BLACK BLACK</b>
+        <i><font color="blue">6. </font></i><b>BLACK WHITE WHITE _____ BLACK BLACK BLACK</b>
+        <i><font color="blue">5. </font></i><b>BLACK BLACK WHITE _____ WHITE BLACK WHITE</b>
+        <i><font color="blue">4. </font></i><b>BLACK BLACK WHITE BLACK WHITE _____ WHITE</b>
+        <i><font color="blue">3. </font></i><b>BLACK BLACK WHITE BLACK _____ WHITE WHITE</b>
+        <i><font color="blue">2. </font></i><b>BLACK BLACK _____ BLACK WHITE WHITE WHITE</b>
+        <i><font color="blue">1. </font></i><b>BLACK BLACK BLACK _____ WHITE WHITE WHITE</b>
+    </pre>
+
 </body>
 </html>
